@@ -181,21 +181,25 @@ echo "Using template: ${TEMPLATE_PATH}"
 echo ""
 echo -e "${YELLOW}Step 2: Creating LXC container...${NC}"
 
+# Build network configuration
+# For static IP with gateway, include gw in the net0 parameter
+if [ -n "$GATEWAY" ] && [ "$IP_ADDRESS" != "dhcp" ]; then
+    NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS},gw=${GATEWAY}"
+else
+    NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS}"
+fi
+
 CREATE_CMD="pct create ${CTID} ${TEMPLATE_PATH} \
     --hostname ${HOSTNAME} \
     --memory ${MEMORY} \
     --swap ${SWAP} \
     --cores ${CORES} \
     --rootfs ${STORAGE}:${DISK_SIZE} \
-    --net0 name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS} \
+    --net0 ${NET_CONFIG} \
     --unprivileged 1 \
     --features nesting=1 \
     --password ${PASSWORD} \
     --start 0"
-
-if [ -n "$GATEWAY" ] && [ "$IP_ADDRESS" != "dhcp" ]; then
-    CREATE_CMD="${CREATE_CMD} --gw ${GATEWAY}"
-fi
 
 if [ -n "$DNS" ]; then
     CREATE_CMD="${CREATE_CMD} --nameserver ${DNS}"

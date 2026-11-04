@@ -89,6 +89,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2024
+
+### Fixed
+- **Gateway configuration error** in Proxmox LXC deployment script
+  - Fixed `Unknown option: gw` error when deploying with static IP
+  - Gateway is now correctly included in `--net0` parameter instead of as a separate `--gw` option
+  - Affects `deploy/proxmox-auto-deploy.sh`
+  - See [BUGFIX-GATEWAY.md](BUGFIX-GATEWAY.md) for details
+
+## [1.1.0] - 2024
+
+### Added
+- **Container ID auto-detection** in Proxmox LXC deployment script
+  - Automatically finds next available CTID to avoid conflicts
+  - Configurable search range (CTID_MIN/CTID_MAX)
+  - Validates custom IDs before creating containers
+  - See [CTID-AUTO-DETECTION.md](CTID-AUTO-DETECTION.md) for details
+
 ## [Unreleased]
 
 ### Planned Features
