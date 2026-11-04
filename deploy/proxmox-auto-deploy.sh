@@ -144,6 +144,38 @@ if [ -z "$PASSWORD" ]; then
     fi
 fi
 
+# Prompt for project directory (required for deployment)
+echo ""
+echo -e "${YELLOW}Project files are required for deployment.${NC}"
+echo "The application needs to be built and deployed to the container."
+echo ""
+
+if [ -z "$PROJECT_DIR" ]; then
+    read -p "Path to project files on this host: " PROJECT_DIR
+fi
+
+if [ -z "$PROJECT_DIR" ]; then
+    echo -e "${RED}Error: Project directory is required${NC}"
+    echo "Please provide the path to the project files."
+    exit 1
+fi
+
+# Verify project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo -e "${RED}Error: Project directory does not exist: $PROJECT_DIR${NC}"
+    exit 1
+fi
+
+# Check if it looks like the right project
+if [ ! -f "$PROJECT_DIR/package.json" ]; then
+    echo -e "${YELLOW}Warning: No package.json found in $PROJECT_DIR${NC}"
+    echo "This doesn't look like the UniFi Firewall Manager project."
+    read -p "Continue anyway? [y/N]: " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
 echo ""
 echo -e "${GREEN}Starting deployment...${NC}"
 echo ""
@@ -294,19 +326,45 @@ rm -rf /tmp/app /var/lib/apt/lists/*
 echo "Setup complete!"
 INTERNAL_SCRIPT
 
-# Copy project files if available
-if [ -n "$PROJECT_DIR" ] && [ -d "$PROJECT_DIR" ]; then
-    echo "Copying project files to container..."
-    pct push ${CTID} ${PROJECT_DIR} /tmp/app --permissions
+# Copy project files to container
+echo -e "${YELLOW}Copying project files to container...${NC}"
+if ! pct push ${CTID} ${PROJECT_DIR} /tmp/app --permissions; then
+    echo -e "${RED}Error: Failed to copy project files to container${NC}"
+    exit 1
 fi
+echo -e "${GREEN}✓ Project files copied${NC}"
 
 # Copy and run the internal setup script
+echo -e "${YELLOW}Running setup inside container...${NC}"
 pct push ${CTID} /tmp/lxc-internal-setup.sh /tmp/lxc-internal-setup.sh
 pct exec ${CTID} -- chmod +x /tmp/lxc-internal-setup.sh
-pct exec ${CTID} -- /tmp/lxc-internal-setup.sh
+
+if ! pct exec ${CTID} -- /tmp/lxc-internal-setup.sh; then
+    echo -e "${RED}Error: Setup script failed inside container${NC}"
+    exit 1
+fi
 
 # Clean up temp files
 rm -f /tmp/lxc-internal-setup.sh
+
+# Verify deployment
+echo ""
+echo -e "${YELLOW}Verifying deployment...${NC}"
+if pct exec ${CTID} -- test -f /opt/unifi-firewall-manager/index.html; then
+    echo -e "${GREEN}✓ Application files deployed successfully${NC}"
+else
+    echo -e "${RED}Error: Application files not found in container${NC}"
+    echo "The deployment may have failed. Check the logs above."
+    echo ""
+    echo "To fix manually:"
+    echo "  1. Enter the container: pct enter ${CTID}"
+    echo "  2. Check files: ls -la /opt/unifi-firewall-manager/"
+    echo "  3. If missing, rebuild: cd /tmp/app && npm install && npm run build"
+    echo "  4. Copy files: cp -r dist/* /opt/unifi-firewall-manager/"
+    echo "  5. Fix permissions: chown -R www-data:www-data /opt/unifi-firewall-manager"
+    echo "  6. Restart nginx: systemctl restart nginx"
+    exit 1
+fi
 
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
