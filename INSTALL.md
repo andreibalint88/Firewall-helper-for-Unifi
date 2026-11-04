@@ -106,7 +106,10 @@ chmod +x deploy/proxmox-auto-deploy.sh
 
 **Interactive prompts:**
 ```
-Container ID [100]: 
+Scanning for available Container IDs (starting from 100)...
+✓ Next available Container ID: 101
+
+Container ID [101] (auto-detected as next available): 
 Hostname [unifi-fw-manager]: 
 Memory (MB) [512]: 
 CPU Cores [1]: 
@@ -119,6 +122,8 @@ Root password for container: [enter password]
 
 Proceed? [Y/n]: Y
 ```
+
+**Note:** The script automatically detects the next available Container ID (starting from 100) to avoid conflicts with existing containers. You can still specify a custom ID if needed.
 
 **What the script does:**
 1. Downloads Debian 12 container template

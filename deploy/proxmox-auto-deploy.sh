@@ -14,7 +14,8 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Configuration - Edit these values
-CTID=100                          # Container ID
+CTID_MIN=100                      # Minimum Container ID to start searching from
+CTID_MAX=999                      # Maximum Container ID to search up to
 HOSTNAME="unifi-fw-manager"       # Container hostname
 MEMORY=512                        # RAM in MB
 SWAP=512                          # Swap in MB
@@ -29,6 +30,39 @@ DNS="8.8.8.8"                     # DNS server
 PASSWORD=""                       # Root password for the container (will prompt if empty)
 SSH_KEYS=""                       # Path to SSH public key file (optional)
 PROJECT_DIR=""                    # Path to project files on Proxmox host (will prompt)
+
+# Function to check if a container ID is in use
+# Returns 0 (true) if in use, 1 (false) if available
+ctid_in_use() {
+    local check_id=$1
+    # Check via pct status (works for running and stopped containers)
+    if pct status "$check_id" &> /dev/null 2>&1; then
+        return 0
+    fi
+    # Also check the config directory as a fallback
+    if [ -f "/etc/pve/lxc/${check_id}.conf" ]; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to find the next available container ID
+find_next_available_ctid() {
+    local start_id=${1:-100}
+    local max_id=${2:-999}
+    local current_id=$start_id
+
+    while [ $current_id -le $max_id ]; do
+        if ! ctid_in_use $current_id; then
+            echo $current_id
+            return 0
+        fi
+        current_id=$((current_id + 1))
+    done
+
+    # No available ID found in range
+    return 1
+}
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════╗"
@@ -51,19 +85,33 @@ if ! command -v pveversion &> /dev/null; then
     exit 1
 fi
 
-# Check if CTID is already in use
-if pct status ${CTID} &> /dev/null 2>&1; then
-    echo -e "${RED}Error: Container ID ${CTID} is already in use${NC}"
-    echo "Choose a different CTID or destroy the existing container first"
+# Auto-detect next available container ID
+echo -e "${YELLOW}Scanning for available Container IDs (starting from ${CTID_MIN})...${NC}"
+CTID=$(find_next_available_ctid $CTID_MIN $CTID_MAX)
+
+if [ -z "$CTID" ]; then
+    echo -e "${RED}Error: No available Container ID found in range ${CTID_MIN}-${CTID_MAX}${NC}"
+    echo "Please free up a container ID or adjust CTID_MIN/CTID_MAX in the script."
     exit 1
 fi
+
+echo -e "${GREEN}✓ Next available Container ID: ${CTID}${NC}"
+echo ""
 
 # Interactive configuration
 echo -e "${YELLOW}Interactive Setup${NC}"
 echo ""
 
-read -p "Container ID [${CTID}]: " input
-CTID=${input:-$CTID}
+read -p "Container ID [${CTID}] (auto-detected as next available): " input
+if [ -n "$input" ]; then
+    # User provided a custom ID - verify it's available
+    if ctid_in_use "$input"; then
+        echo -e "${RED}Error: Container ID ${input} is already in use${NC}"
+        echo "Please choose a different ID or destroy the existing container first."
+        exit 1
+    fi
+    CTID=$input
+fi
 
 read -p "Hostname [${HOSTNAME}]: " input
 HOSTNAME=${input:-$HOSTNAME}

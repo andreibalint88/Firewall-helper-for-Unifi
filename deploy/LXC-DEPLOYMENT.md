@@ -12,6 +12,16 @@ This guide provides step-by-step instructions for deploying the UniFi Firewall M
 
 ## Quick Start
 
+### Automatic Container ID Detection
+
+The automated deployment script (`proxmox-auto-deploy.sh`) automatically finds the next available Container ID starting from 100, avoiding conflicts with existing containers. You can still specify a custom ID if needed during the interactive prompts.
+
+**How it works:**
+- Scans for existing containers starting from ID 100
+- Automatically selects the first available ID
+- Validates the ID is not in use before creating the container
+- Allows manual override if you specify a different ID
+
 ### Option 1: Using the Setup Script (Recommended)
 
 1. **Create LXC Container in Proxmox**
@@ -21,6 +31,8 @@ This guide provides step-by-step instructions for deploying the UniFi Firewall M
    pveam download local debian-12-standard_12.2-1_amd64.tar.zst
    
    # Create container (adjust CTID, storage, and resources as needed)
+   # Note: The automated script (proxmox-auto-deploy.sh) will automatically
+   # find the next available CTID starting from 100 to avoid conflicts
    pct create 100 local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst \
      --hostname unifi-firewall-mgr \
      --memory 512 \
