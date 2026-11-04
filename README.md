@@ -44,6 +44,9 @@ If you're experienced with Meraki firewalls and need to manage UniFi networks, t
 
 ## 🚀 Quick Start
 
+### Full Installation Guide
+📖 **[See INSTALL.md](INSTALL.md)** for complete installation instructions covering all deployment methods.
+
 ### Option 1: Demo Mode (No Setup Required)
 
 1. Open the application in your browser
@@ -60,9 +63,18 @@ If you're experienced with Meraki firewalls and need to manage UniFi networks, t
 
 ## 🏗️ Deployment
 
-### Proxmox LXC (Recommended)
+📖 **[See INSTALL.md](INSTALL.md)** for complete step-by-step installation instructions.
 
-The easiest way to deploy in a home lab environment:
+### Quick Deploy Options
+
+| Method | Command | Best For |
+|--------|---------|----------|
+| **Proxmox LXC** | `./deploy/proxmox-auto-deploy.sh` | Home labs, Proxmox users |
+| **Docker** | `docker-compose up -d` | Any Docker environment |
+| **Static Hosting** | `npm run build` → upload `dist/` | Netlify, Vercel, GitHub Pages |
+| **Manual Linux** | See [INSTALL.md](INSTALL.md) | Existing servers |
+
+### Proxmox LXC (Recommended for Home Lab)
 
 ```bash
 # On your Proxmox host
@@ -72,9 +84,9 @@ chmod +x deploy/proxmox-auto-deploy.sh
 
 **Resources**: 512MB RAM, 1 CPU core, 2GB disk
 
-See [deploy/LXC-DEPLOYMENT.md](deploy/LXC-DEPLOYMENT.md) for detailed instructions.
+📖 **Detailed guide**: [deploy/LXC-DEPLOYMENT.md](deploy/LXC-DEPLOYMENT.md)
 
-### Docker
+### Docker (Universal)
 
 ```bash
 # Build and run
@@ -83,7 +95,7 @@ docker-compose up -d
 # Access at http://localhost
 ```
 
-### Static Hosting
+### Static Hosting (Simplest)
 
 ```bash
 # Build
@@ -91,10 +103,10 @@ npm install
 npm run build
 
 # Upload dist/ folder to any web server
-# Or use Netlify, Vercel, GitHub Pages, etc.
+# Or drag-and-drop to Netlify, Vercel, GitHub Pages, etc.
 ```
 
-See [deploy/README.md](deploy/README.md) for all deployment options.
+📖 **All deployment options**: [deploy/README.md](deploy/README.md)
 
 ## 🔧 Development
 
@@ -238,10 +250,24 @@ MIT License - see LICENSE file for details
 - Inspired by the need for better UniFi documentation
 - Thanks to the UniFi community for API documentation
 
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[INSTALL.md](INSTALL.md)** | Complete installation guide for all deployment methods |
+| **[deploy/README.md](deploy/README.md)** | Deployment options overview and comparison |
+| **[deploy/LXC-DEPLOYMENT.md](deploy/LXC-DEPLOYMENT.md)** | Comprehensive Proxmox LXC deployment guide |
+| **[DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md)** | Quick reference for deployment |
+| **[deploy/nginx.conf](deploy/nginx.conf)** | Nginx configuration for LXC/manual deployment |
+| **[deploy/nginx-docker.conf](deploy/nginx-docker.conf)** | Nginx configuration for Docker |
+
 ## 📞 Support
 
-- **Documentation**: See [deploy/LXC-DEPLOYMENT.md](deploy/LXC-DEPLOYMENT.md)
-- **Issues**: Open a GitHub issue
+- **Installation issues**: See [INSTALL.md](INSTALL.md)
+- **Proxmox LXC issues**: See [deploy/LXC-DEPLOYMENT.md](deploy/LXC-DEPLOYMENT.md)
+- **Docker issues**: Check `docker-compose logs`
+- **General questions**: See [README.md](README.md)
+- **Bug reports**: Open a GitHub issue
 - **Discussions**: Use GitHub Discussions
 
 ---

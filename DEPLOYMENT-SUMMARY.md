@@ -1,5 +1,7 @@
 # Deployment Summary
 
+📖 **For complete installation instructions, see [INSTALL.md](INSTALL.md)**
+
 ## What Was Created
 
 Your UniFi Firewall Manager is now fully optimized for Proxmox LXC deployment with multiple deployment options.

@@ -2,6 +2,8 @@
 
 This directory contains everything you need to deploy the UniFi Firewall Manager in various environments.
 
+📖 **New to installation?** Start with the comprehensive [INSTALL.md](../INSTALL.md) guide in the project root.
+
 ## Deployment Options
 
 ### 1. Proxmox LXC (Recommended for Home Lab)

@@ -2,6 +2,8 @@
 
 This guide provides step-by-step instructions for deploying the UniFi Firewall Manager as a Proxmox LXC container.
 
+📖 **Looking for other installation methods?** See the comprehensive [INSTALL.md](../INSTALL.md) guide.
+
 ## Prerequisites
 
 - Proxmox VE 7.x or 8.x
