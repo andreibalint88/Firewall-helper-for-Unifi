@@ -20,20 +20,33 @@ The `proxmox-auto-deploy.sh` script now:
 
 ## How It Works
 
-### Auto-Detection Logic
+### Auto-Detection Logic (Cluster-Aware)
 
 ```bash
-# Function to check if a container ID is in use
+# Function to check if a container ID is in use (cluster-aware)
 ctid_in_use() {
     local check_id=$1
-    # Check via pct status (works for running and stopped containers)
-    if pct status "$check_id" &> /dev/null 2>&1; then
+    
+    # Method 1: Check via pct list (cluster-aware - shows all containers on all nodes)
+    if pct list | grep -q "^ *${check_id} "; then
         return 0
     fi
-    # Also check the config directory as a fallback
+    
+    # Method 2: Check via qm list for VMs (to avoid ID conflicts with VMs too)
+    if qm list 2>/dev/null | grep -q "^ *${check_id} "; then
+        return 0
+    fi
+    
+    # Method 3: Check the config directory (shared across cluster via pmxcfs)
     if [ -f "/etc/pve/lxc/${check_id}.conf" ]; then
         return 0
     fi
+    
+    # Method 4: Check for VM configs too
+    if [ -f "/etc/pve/qemu-server/${check_id}.conf" ]; then
+        return 0
+    fi
+    
     return 1
 }
 
@@ -54,6 +67,17 @@ find_next_available_ctid() {
     return 1
 }
 ```
+
+### Cluster Support
+
+The detection is **cluster-aware** and works correctly in multi-node Proxmox environments:
+
+- ✅ Detects containers on **any node** in the cluster (not just the local node)
+- ✅ Avoids conflicts with **VMs** using the same ID
+- ✅ Uses `pct list` which shows all containers across all nodes
+- ✅ Checks the cluster-shared filesystem (`/etc/pve/`)
+
+This prevents the "CT already exists on node" error when deploying in a cluster.
 
 ### Example Output
 

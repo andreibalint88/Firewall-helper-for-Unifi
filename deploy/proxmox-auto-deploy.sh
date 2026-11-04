@@ -30,18 +30,31 @@ PASSWORD=""                       # Root password for the container (will prompt
 SSH_KEYS=""                       # Path to SSH public key file (optional)
 PROJECT_DIR=""                    # Path to project files on Proxmox host
 
-# Function to check if a container ID is in use
+# Function to check if a container ID is in use (cluster-aware)
 # Returns 0 (true) if in use, 1 (false) if available
 ctid_in_use() {
     local check_id=$1
-    # Check via pct status (works for running and stopped containers)
-    if pct status "$check_id" &> /dev/null 2>&1; then
+    
+    # Method 1: Check via pct list (cluster-aware - shows all containers on all nodes)
+    if pct list | grep -q "^ *${check_id} "; then
         return 0
     fi
-    # Also check the config directory as a fallback
+    
+    # Method 2: Check via qm list for VMs (to avoid ID conflicts with VMs too)
+    if qm list 2>/dev/null | grep -q "^ *${check_id} "; then
+        return 0
+    fi
+    
+    # Method 3: Check the config directory (shared across cluster via pmxcfs)
     if [ -f "/etc/pve/lxc/${check_id}.conf" ]; then
         return 0
     fi
+    
+    # Method 4: Check for VM configs too
+    if [ -f "/etc/pve/qemu-server/${check_id}.conf" ]; then
+        return 0
+    fi
+    
     return 1
 }
 

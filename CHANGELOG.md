@@ -89,6 +89,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2024
+
+### Fixed
+- **Cluster-aware Container ID detection**
+  - Fixed "CT already exists on node" error in Proxmox clusters
+  - Now uses `pct list` to detect containers across all nodes
+  - Also checks for VM ID conflicts using `qm list`
+  - Checks both `/etc/pve/lxc/` and `/etc/pve/qemu-server/` configs
+  - Prevents false positives in multi-node environments
+  - See [BUGFIX-CLUSTER-DETECTION.md](BUGFIX-CLUSTER-DETECTION.md) for details
+
 ## [1.1.2] - 2024
 
 ### Changed

@@ -122,7 +122,7 @@ Enter root password for container: [enter password]
 Starting deployment...
 ```
 
-**Note:** The script uses sensible defaults for all settings (512MB RAM, 1 CPU core, 2GB disk, DHCP networking) and only prompts for the root password. It automatically detects the next available Container ID to avoid conflicts.
+**Note:** The script uses sensible defaults for all settings (512MB RAM, 1 CPU core, 2GB disk, DHCP networking) and only prompts for the root password. It automatically detects the next available Container ID to avoid conflicts. The detection is **cluster-aware** and works correctly in multi-node Proxmox environments by checking all nodes for existing containers and VMs.
 
 **What the script does:**
 1. Downloads Debian 12 container template
