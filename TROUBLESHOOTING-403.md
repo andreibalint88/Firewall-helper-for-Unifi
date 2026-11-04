@@ -59,7 +59,7 @@ ls -la /opt/unifi-firewall-manager/
 
 ```bash
 # Set correct ownership
-chown -R www-www-data /opt/unifi-firewall-manager
+chown -R www-data:www-data /opt/unifi-firewall-manager
 
 # Set correct permissions
 chmod -R 755 /opt/unifi-firewall-manager
@@ -160,7 +160,7 @@ echo ""
 
 # Fix permissions
 echo "4. Fixing permissions..."
-chown -R www-www-data $ROOT_DIR
+chown -R www-data:www-data $ROOT_DIR
 chmod -R 755 $ROOT_DIR
 echo "   ✓ Permissions fixed"
 echo ""
@@ -222,7 +222,7 @@ ls -la $ROOT_DIR/
 
 # 3. If files don't exist, you need to deploy them
 # If files exist, fix permissions:
-chown -R www-www-data $ROOT_DIR
+chown -R www-data:www-data $ROOT_DIR
 chmod -R 755 $ROOT_DIR
 
 # 4. Restart nginx
@@ -254,7 +254,7 @@ cd /tmp/Firewall-helper-for-Unifi
 npm install
 npm run build
 cp -r dist/* /opt/unifi-firewall-manager/
-chown -R www-www-data /opt/unifi-firewall-manager
+chown -R www-data:www-data /opt/unifi-firewall-manager
 ```
 
 ### Scenario 2: Wrong Permissions
@@ -267,7 +267,7 @@ ls -la /opt/unifi-firewall-manager/
 
 **Solution:**
 ```bash
-chown -R www-www-data /opt/unifi-firewall-manager
+chown -R www-data:www-data /opt/unifi-firewall-manager
 chmod -R 755 /opt/unifi-firewall-manager
 systemctl restart nginx
 ```
@@ -367,7 +367,7 @@ To prevent this issue in future deployments:
 | Issue | Command to Check | Fix |
 |-------|------------------|-----|
 | Files missing | `ls /opt/unifi-firewall-manager/` | Deploy files |
-| Wrong permissions | `ls -la /opt/unifi-firewall-manager/` | `chown -R www-www-data` |
+| Wrong permissions | `ls -la /opt/unifi-firewall-manager/` | `chown -R www-data:www-data` |
 | Wrong config | `cat /etc/nginx/sites-enabled/*` | Edit config |
 | nginx not running | `systemctl status nginx` | `systemctl start nginx` |
 | SELinux/AppArmor | `dmesg \| grep nginx` | Adjust security policy |

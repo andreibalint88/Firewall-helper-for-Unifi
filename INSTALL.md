@@ -327,7 +327,7 @@ sudo mkdir -p /var/www/unifi-firewall-manager
 sudo cp -r dist/* /var/www/unifi-firewall-manager/
 
 # Set permissions
-sudo chown -R www-www-data /var/www/unifi-firewall-manager
+sudo chown -R www-data:www-data /var/www/unifi-firewall-manager
 sudo chmod -R 755 /var/www/unifi-firewall-manager
 ```
 
@@ -706,11 +706,11 @@ curl -k https://<controller-ip>
 
 ```bash
 # Fix permissions (inside container or on server)
-sudo chown -R www-www-data /opt/unifi-firewall-manager
+sudo chown -R www-data:www-data /opt/unifi-firewall-manager
 sudo chmod -R 755 /opt/unifi-firewall-manager
 
 # For nginx
-sudo chown -R www-www-data /var/www/unifi-firewall-manager
+sudo chown -R www-data:www-data /var/www/unifi-firewall-manager
 ```
 
 ### Rules Not Loading
