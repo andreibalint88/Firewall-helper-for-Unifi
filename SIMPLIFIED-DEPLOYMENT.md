@@ -47,7 +47,7 @@ The script now uses these defaults automatically:
 | Swap | 512MB |
 | CPU Cores | 1 |
 | Disk Size | 2GB |
-| Storage | local-lvm |
+| Storage | local-zfs |
 | Network Bridge | vmbr0 |
 | IP Address | DHCP |
 | DNS | 8.8.8.8 |
@@ -76,7 +76,7 @@ Configuration:
   Hostname: unifi-fw-manager
   Memory: 512MB
   CPU Cores: 1
-  Disk: 2GB on local-lvm
+  Disk: 2GB on local-zfs
   Network: vmbr0 (DHCP)
 
 Container ID [101] (auto-detected, press Enter to use or enter custom): [press Enter or type custom ID]
@@ -117,7 +117,7 @@ MEMORY=512                        # RAM in MB
 SWAP=512                          # Swap in MB
 CORES=1                           # CPU cores
 DISK_SIZE=2                       # Root disk in GB
-STORAGE="local-lvm"               # Storage pool for root disk
+STORAGE="local-zfs"               # Storage pool for root disk
 TEMPLATE_STORAGE="local"          # Storage for templates
 BRIDGE="vmbr0"                    # Network bridge
 IP_ADDRESS="dhcp"                 # IP address (dhcp)

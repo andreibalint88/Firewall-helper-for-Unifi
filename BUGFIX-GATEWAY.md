@@ -23,7 +23,7 @@ pct create 120 local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst \
     --memory 512 \
     --swap 512 \
     --cores 1 \
-    --rootfs local-lvm:2 \
+    --rootfs local-zfs:2 \
     --net0 name=eth0,bridge=vmbr0,ip=10.10.4.40 \
     --unprivileged 1 \
     --features nesting=1 \
@@ -39,7 +39,7 @@ pct create 120 local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst \
     --memory 512 \
     --swap 512 \
     --cores 1 \
-    --rootfs local-lvm:2 \
+    --rootfs local-zfs:2 \
     --net0 name=eth0,bridge=vmbr0,ip=10.10.4.40,gw=10.10.4.1 \
     --unprivileged 1 \
     --features nesting=1 \

@@ -89,6 +89,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.5] - 2024
+
+### Changed
+- **Default storage pool**
+  - Changed default storage from `local-lvm` to `local-zfs`
+  - Updated all documentation to reflect new default
+  - Better performance and features with ZFS storage
+
 ## [1.1.4] - 2024
 
 ### Changed

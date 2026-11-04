@@ -21,7 +21,7 @@ The automated deployment script (`proxmox-auto-deploy.sh`) uses sensible default
 - Hostname: unifi-fw-manager
 - Memory: 512MB RAM
 - CPU: 1 core
-- Disk: 2GB on local-lvm
+- Disk: 2GB on local-zfs
 - Network: DHCP on vmbr0
 - DNS: 8.8.8.8
 
@@ -52,7 +52,7 @@ The automated deployment script (`proxmox-auto-deploy.sh`) uses sensible default
      --memory 512 \
      --swap 512 \
      --cores 1 \
-     --rootfs local-lvm:2 \
+     --rootfs local-zfs:2 \
      --net0 name=eth0,bridge=vmbr0,ip=dhcp \
      --unprivileged 1 \
      --features nesting=1

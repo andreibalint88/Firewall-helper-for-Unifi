@@ -113,7 +113,7 @@ Configuration:
   Hostname: unifi-fw-manager
   Memory: 512MB
   CPU Cores: 1
-  Disk: 2GB on local-lvm
+  Disk: 2GB on local-zfs
   Network: vmbr0 (DHCP)
 
 Container ID [101] (auto-detected, press Enter to use or enter custom): [press Enter or type custom ID]
