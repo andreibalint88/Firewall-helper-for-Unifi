@@ -110,19 +110,20 @@ Scanning for available Container IDs (starting from 100)...
 ✓ Next available Container ID: 101
 
 Configuration:
-  Container ID: 101 (auto-detected)
   Hostname: unifi-fw-manager
   Memory: 512MB
   CPU Cores: 1
   Disk: 2GB on local-lvm
   Network: vmbr0 (DHCP)
 
+Container ID [101] (auto-detected, press Enter to use or enter custom): [press Enter or type custom ID]
+
 Enter root password for container: [enter password]
 
 Starting deployment...
 ```
 
-**Note:** The script uses sensible defaults for all settings (512MB RAM, 1 CPU core, 2GB disk, DHCP networking) and only prompts for the root password. It automatically detects the next available Container ID to avoid conflicts. The detection is **cluster-aware** and works correctly in multi-node Proxmox environments by checking all nodes for existing containers and VMs.
+**Note:** The script uses sensible defaults for all settings (512MB RAM, 1 CPU core, 2GB disk, DHCP networking) and prompts for the Container ID and root password. It automatically detects the next available Container ID as a suggestion, but you can enter a custom ID if preferred. The detection is **cluster-aware** and works correctly in multi-node Proxmox environments by checking all nodes for existing containers and VMs.
 
 **What the script does:**
 1. Downloads Debian 12 container template

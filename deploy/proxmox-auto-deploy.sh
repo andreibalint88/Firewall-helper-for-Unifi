@@ -110,9 +110,8 @@ fi
 echo -e "${GREEN}✓ Next available Container ID: ${CTID}${NC}"
 echo ""
 
-# Show configuration summary
+# Show configuration summary and prompt for Container ID
 echo -e "${YELLOW}Configuration:${NC}"
-echo "  Container ID: ${CTID} (auto-detected)"
 echo "  Hostname: ${HOSTNAME}"
 echo "  Memory: ${MEMORY}MB"
 echo "  CPU Cores: ${CORES}"
@@ -120,7 +119,21 @@ echo "  Disk: ${DISK_SIZE}GB on ${STORAGE}"
 echo "  Network: ${BRIDGE} (DHCP)"
 echo ""
 
-# Only prompt for password
+# Prompt for Container ID with auto-detected as default
+read -p "Container ID [${CTID}] (auto-detected, press Enter to use or enter custom): " input
+if [ -n "$input" ]; then
+    # User provided a custom ID - verify it's available
+    if ctid_in_use "$input"; then
+        echo -e "${RED}Error: Container ID ${input} is already in use${NC}"
+        echo "Please choose a different ID."
+        exit 1
+    fi
+    CTID=$input
+fi
+
+echo ""
+
+# Prompt for password
 if [ -z "$PASSWORD" ]; then
     read -sp "Enter root password for container: " PASSWORD
     echo ""

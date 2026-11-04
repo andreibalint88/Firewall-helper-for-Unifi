@@ -28,10 +28,11 @@ The Proxmox LXC deployment script has been simplified to use sensible defaults a
 
 ### After (Simple)
 ```bash
-# Script only prompts for:
+# Script prompts for:
+- Container ID (with auto-detected suggestion)
 - Root password
 
-# Total: 1 prompt
+# Total: 2 prompts
 ```
 
 ## Default Configuration
@@ -59,7 +60,7 @@ chmod +x deploy/proxmox-auto-deploy.sh
 ./deploy/proxmox-auto-deploy.sh
 ```
 
-### Step 2: Enter Password
+### Step 2: Choose Container ID and Enter Password
 ```
 ╔══════════════════════════════════════════════════════════╗
 ║   UniFi Firewall Manager - Proxmox LXC Auto-Deploy      ║
@@ -72,12 +73,13 @@ Scanning for available Container IDs (starting from 100)...
 ✓ Next available Container ID: 101
 
 Configuration:
-  Container ID: 101 (auto-detected)
   Hostname: unifi-fw-manager
   Memory: 512MB
   CPU Cores: 1
   Disk: 2GB on local-lvm
   Network: vmbr0 (DHCP)
+
+Container ID [101] (auto-detected, press Enter to use or enter custom): [press Enter or type custom ID]
 
 Enter root password for container: [enter your password]
 
@@ -126,7 +128,8 @@ DNS="8.8.8.8"                     # DNS server
 
 ✅ **Fast Deployment**: Complete in under 2 minutes  
 ✅ **No Conflicts**: Auto-detects available Container IDs  
-✅ **Simple**: Only one prompt (password)  
+✅ **Simple**: Only two prompts (Container ID and password)  
+✅ **Flexible**: Accept auto-detected ID or choose your own  
 ✅ **Sensible Defaults**: Optimized for typical use cases  
 ✅ **Reproducible**: Same configuration every time  
 
@@ -177,10 +180,10 @@ journalctl -xe
 
 | Feature | Before | After |
 |---------|--------|-------|
-| Prompts | 12+ | 1 |
+| Prompts | 12+ | 2 |
 | Time to deploy | 5-10 minutes | < 2 minutes |
 | Configuration | Manual | Automatic |
-| Customization | Interactive | Edit script |
+| Customization | Interactive | Edit script or enter custom ID |
 | Error-prone | Yes | No |
 | Reproducible | No | Yes |
 

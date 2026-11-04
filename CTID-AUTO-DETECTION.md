@@ -95,12 +95,13 @@ Scanning for available Container IDs (starting from 100)...
 ✓ Next available Container ID: 101
 
 Configuration:
-  Container ID: 101 (auto-detected)
   Hostname: unifi-fw-manager
   Memory: 512MB
   CPU Cores: 1
   Disk: 2GB on local-lvm
   Network: vmbr0 (DHCP)
+
+Container ID [101] (auto-detected, press Enter to use or enter custom): [press Enter or type custom ID]
 
 Enter root password for container: 
 ```

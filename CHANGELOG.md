@@ -89,6 +89,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.4] - 2024
+
+### Changed
+- **Container ID selection**
+  - Now prompts for Container ID with auto-detected suggestion
+  - Accept the suggested ID or enter a custom ID
+  - Validates custom ID to ensure it's not in use
+  - Provides flexibility while maintaining safety
+
 ## [1.1.3] - 2024
 
 ### Fixed

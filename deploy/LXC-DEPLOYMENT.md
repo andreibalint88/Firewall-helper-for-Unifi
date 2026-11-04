@@ -25,13 +25,15 @@ The automated deployment script (`proxmox-auto-deploy.sh`) uses sensible default
 - Network: DHCP on vmbr0
 - DNS: 8.8.8.8
 
-**The script only prompts for:**
+**The script prompts for:**
+- Container ID (with auto-detected suggestion, or enter custom)
 - Root password for the container
 
 **How it works:**
 - Scans for existing containers to find the next available ID
 - Uses predefined defaults for all settings
-- Prompts only for the root password
+- Prompts for Container ID (accept suggestion or enter custom) and root password
+- Validates custom Container ID to ensure it's not in use
 - Automatically deploys with optimal configuration
 
 ### Option 1: Using the Setup Script (Recommended)
