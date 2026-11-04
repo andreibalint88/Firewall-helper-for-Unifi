@@ -84,7 +84,8 @@ chmod +x deploy/proxmox-auto-deploy.sh
 
 **Features:**
 - ✅ Automatically detects the next available Container ID (avoids conflicts)
-- ✅ Interactive setup with sensible defaults
+- ✅ Uses sensible defaults (512MB RAM, 1 CPU, 2GB disk, DHCP)
+- ✅ Only prompts for root password
 - ✅ One-command deployment
 
 **Resources**: 512MB RAM, 1 CPU core, 2GB disk

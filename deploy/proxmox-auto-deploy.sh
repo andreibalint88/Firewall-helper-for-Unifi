@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Configuration - Edit these values
+# Configuration - Defaults (no prompts needed)
 CTID_MIN=100                      # Minimum Container ID to start searching from
 CTID_MAX=999                      # Maximum Container ID to search up to
 HOSTNAME="unifi-fw-manager"       # Container hostname
@@ -24,12 +24,11 @@ DISK_SIZE=2                       # Root disk in GB
 STORAGE="local-lvm"               # Storage pool for root disk
 TEMPLATE_STORAGE="local"          # Storage for templates
 BRIDGE="vmbr0"                    # Network bridge
-IP_ADDRESS="dhcp"                 # IP address (dhcp or static like 192.168.1.100/24)
-GATEWAY=""                        # Gateway (required for static IP)
+IP_ADDRESS="dhcp"                 # IP address (dhcp)
 DNS="8.8.8.8"                     # DNS server
-PASSWORD=""                       # Root password for the container (will prompt if empty)
+PASSWORD=""                       # Root password for the container (will prompt)
 SSH_KEYS=""                       # Path to SSH public key file (optional)
-PROJECT_DIR=""                    # Path to project files on Proxmox host (will prompt)
+PROJECT_DIR=""                    # Path to project files on Proxmox host
 
 # Function to check if a container ID is in use
 # Returns 0 (true) if in use, 1 (false) if available
@@ -98,73 +97,30 @@ fi
 echo -e "${GREEN}✓ Next available Container ID: ${CTID}${NC}"
 echo ""
 
-# Interactive configuration
-echo -e "${YELLOW}Interactive Setup${NC}"
-echo ""
-
-read -p "Container ID [${CTID}] (auto-detected as next available): " input
-if [ -n "$input" ]; then
-    # User provided a custom ID - verify it's available
-    if ctid_in_use "$input"; then
-        echo -e "${RED}Error: Container ID ${input} is already in use${NC}"
-        echo "Please choose a different ID or destroy the existing container first."
-        exit 1
-    fi
-    CTID=$input
-fi
-
-read -p "Hostname [${HOSTNAME}]: " input
-HOSTNAME=${input:-$HOSTNAME}
-
-read -p "Memory (MB) [${MEMORY}]: " input
-MEMORY=${input:-$MEMORY}
-
-read -p "CPU Cores [${CORES}]: " input
-CORES=${input:-$CORES}
-
-read -p "Disk Size (GB) [${DISK_SIZE}]: " input
-DISK_SIZE=${input:-$DISK_SIZE}
-
-read -p "Storage Pool [${STORAGE}]: " input
-STORAGE=${input:-$STORAGE}
-
-read -p "Network Bridge [${BRIDGE}]: " input
-BRIDGE=${input:-$BRIDGE}
-
-read -p "IP Address (dhcp or static e.g. 192.168.1.100/24) [${IP_ADDRESS}]: " input
-IP_ADDRESS=${input:-$IP_ADDRESS}
-
-if [ "$IP_ADDRESS" != "dhcp" ]; then
-    read -p "Gateway [${GATEWAY}]: " input
-    GATEWAY=${input:-$GATEWAY}
-fi
-
-read -p "Path to project files on this host (leave empty to skip copy): " input
-PROJECT_DIR=${input:-$PROJECT_DIR}
-
-if [ -z "$PASSWORD" ]; then
-    read -sp "Root password for container: " PASSWORD
-    echo ""
-fi
-
-read -p "SSH public key file path (optional, press Enter to skip): " input
-SSH_KEYS=${input:-$SSH_KEYS}
-
-echo ""
-echo -e "${YELLOW}Configuration Summary:${NC}"
-echo "  Container ID: ${CTID}"
+# Show configuration summary
+echo -e "${YELLOW}Configuration:${NC}"
+echo "  Container ID: ${CTID} (auto-detected)"
 echo "  Hostname: ${HOSTNAME}"
 echo "  Memory: ${MEMORY}MB"
 echo "  CPU Cores: ${CORES}"
 echo "  Disk: ${DISK_SIZE}GB on ${STORAGE}"
-echo "  Network: ${BRIDGE} (${IP_ADDRESS})"
+echo "  Network: ${BRIDGE} (DHCP)"
 echo ""
 
-read -p "Proceed? [Y/n]: " confirm
-if [[ "$confirm" =~ ^[Nn] ]]; then
-    echo "Aborted."
-    exit 0
+# Only prompt for password
+if [ -z "$PASSWORD" ]; then
+    read -sp "Enter root password for container: " PASSWORD
+    echo ""
+    
+    if [ -z "$PASSWORD" ]; then
+        echo -e "${RED}Error: Password cannot be empty${NC}"
+        exit 1
+    fi
 fi
+
+echo ""
+echo -e "${GREEN}Starting deployment...${NC}"
+echo ""
 
 echo ""
 echo -e "${YELLOW}Step 1: Downloading container template...${NC}"
@@ -181,13 +137,8 @@ echo "Using template: ${TEMPLATE_PATH}"
 echo ""
 echo -e "${YELLOW}Step 2: Creating LXC container...${NC}"
 
-# Build network configuration
-# For static IP with gateway, include gw in the net0 parameter
-if [ -n "$GATEWAY" ] && [ "$IP_ADDRESS" != "dhcp" ]; then
-    NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS},gw=${GATEWAY}"
-else
-    NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS}"
-fi
+# Build network configuration (DHCP)
+NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDRESS}"
 
 CREATE_CMD="pct create ${CTID} ${TEMPLATE_PATH} \
     --hostname ${HOSTNAME} \

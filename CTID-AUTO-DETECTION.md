@@ -14,8 +14,8 @@ The `proxmox-auto-deploy.sh` script now:
 
 1. **Automatically scans** for available Container IDs starting from 100
 2. **Detects the next available ID** by checking both `pct status` and `/etc/pve/lxc/` directory
-3. **Displays the detected ID** before prompting for configuration
-4. **Validates custom IDs** if you choose to override the auto-detected value
+3. **Uses sensible defaults** for all configuration (memory, CPU, disk, network)
+4. **Only prompts for the root password** - no other interactive questions
 5. **Prevents conflicts** by rejecting IDs that are already in use
 
 ## How It Works
@@ -70,9 +70,15 @@ When you run the script, you'll see:
 Scanning for available Container IDs (starting from 100)...
 ✓ Next available Container ID: 101
 
-Interactive Setup
+Configuration:
+  Container ID: 101 (auto-detected)
+  Hostname: unifi-fw-manager
+  Memory: 512MB
+  CPU Cores: 1
+  Disk: 2GB on local-lvm
+  Network: vmbr0 (DHCP)
 
-Container ID [101] (auto-detected as next available): 
+Enter root password for container: 
 ```
 
 ## Configuration Options
@@ -85,27 +91,32 @@ CTID_MIN=100                      # Minimum Container ID to start searching from
 CTID_MAX=999                      # Maximum Container ID to search up to
 ```
 
-## Manual Override
+## Custom Configuration
 
-If you want to use a specific Container ID:
+If you want to use different settings than the defaults:
 
-1. Run the script
-2. When prompted for Container ID, enter your desired ID
-3. The script will validate it's available before proceeding
-4. If the ID is in use, you'll see an error and can choose a different one
+1. Edit the script configuration at the top of `deploy/proxmox-auto-deploy.sh`
+2. Modify the values for `HOSTNAME`, `MEMORY`, `CORES`, `DISK_SIZE`, etc.
+3. Run the script - it will use your custom values
 
 Example:
-```
-Container ID [101] (auto-detected as next available): 150
+```bash
+# Edit these values at the top of proxmox-auto-deploy.sh
+CTID_MIN=200                      # Start searching from 200
+HOSTNAME="my-firewall-mgr"        # Custom hostname
+MEMORY=1024                       # 1GB RAM
+CORES=2                           # 2 CPU cores
+DISK_SIZE=4                       # 4GB disk
 ```
 
 ## Benefits
 
 - ✅ **No more conflicts**: Automatically avoids existing containers
 - ✅ **Time-saving**: No need to manually check which IDs are available
-- ✅ **Flexible**: Still allows manual override when needed
+- ✅ **Simple**: Only asks for root password, everything else uses defaults
 - ✅ **Safe**: Validates IDs before creating containers
-- ✅ **Transparent**: Shows you what ID was detected and why
+- ✅ **Transparent**: Shows you what ID was detected and the configuration
+- ✅ **Fast**: Complete deployment in under 2 minutes
 
 ## Updated Documentation
 

@@ -12,15 +12,27 @@ This guide provides step-by-step instructions for deploying the UniFi Firewall M
 
 ## Quick Start
 
-### Automatic Container ID Detection
+### Simplified Deployment Process
 
-The automated deployment script (`proxmox-auto-deploy.sh`) automatically finds the next available Container ID starting from 100, avoiding conflicts with existing containers. You can still specify a custom ID if needed during the interactive prompts.
+The automated deployment script (`proxmox-auto-deploy.sh`) uses sensible defaults for all configuration:
+
+**Defaults:**
+- Container ID: Auto-detected (next available starting from 100)
+- Hostname: unifi-fw-manager
+- Memory: 512MB RAM
+- CPU: 1 core
+- Disk: 2GB on local-lvm
+- Network: DHCP on vmbr0
+- DNS: 8.8.8.8
+
+**The script only prompts for:**
+- Root password for the container
 
 **How it works:**
-- Scans for existing containers starting from ID 100
-- Automatically selects the first available ID
-- Validates the ID is not in use before creating the container
-- Allows manual override if you specify a different ID
+- Scans for existing containers to find the next available ID
+- Uses predefined defaults for all settings
+- Prompts only for the root password
+- Automatically deploys with optimal configuration
 
 ### Option 1: Using the Setup Script (Recommended)
 

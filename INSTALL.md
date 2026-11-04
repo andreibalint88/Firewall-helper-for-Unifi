@@ -104,26 +104,25 @@ chmod +x deploy/proxmox-auto-deploy.sh
 ./deploy/proxmox-auto-deploy.sh
 ```
 
-**Interactive prompts:**
+**Simple prompts:**
 ```
 Scanning for available Container IDs (starting from 100)...
 ✓ Next available Container ID: 101
 
-Container ID [101] (auto-detected as next available): 
-Hostname [unifi-fw-manager]: 
-Memory (MB) [512]: 
-CPU Cores [1]: 
-Disk Size (GB) [2]: 
-Storage Pool [local-lvm]: 
-Network Bridge [vmbr0]: 
-IP Address (dhcp or static e.g. 192.168.1.100/24) [dhcp]: 
-Path to project files on this host: /tmp/unifi-firewall-manager
-Root password for container: [enter password]
+Configuration:
+  Container ID: 101 (auto-detected)
+  Hostname: unifi-fw-manager
+  Memory: 512MB
+  CPU Cores: 1
+  Disk: 2GB on local-lvm
+  Network: vmbr0 (DHCP)
 
-Proceed? [Y/n]: Y
+Enter root password for container: [enter password]
+
+Starting deployment...
 ```
 
-**Note:** The script automatically detects the next available Container ID (starting from 100) to avoid conflicts with existing containers. You can still specify a custom ID if needed.
+**Note:** The script uses sensible defaults for all settings (512MB RAM, 1 CPU core, 2GB disk, DHCP networking) and only prompts for the root password. It automatically detects the next available Container ID to avoid conflicts.
 
 **What the script does:**
 1. Downloads Debian 12 container template

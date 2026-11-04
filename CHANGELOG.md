@@ -89,6 +89,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.2] - 2024
+
+### Changed
+- **Simplified Proxmox LXC deployment**
+  - Removed all interactive prompts except for root password
+  - Uses sensible defaults for all settings (512MB RAM, 1 CPU, 2GB disk, DHCP)
+  - Auto-detects next available Container ID
+  - Streamlined deployment process - just run and enter password
+  - Updated documentation to reflect simplified workflow
+
 ## [1.1.1] - 2024
 
 ### Fixed
