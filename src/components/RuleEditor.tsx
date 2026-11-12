@@ -107,9 +107,9 @@ export const RuleEditor: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1a1f2e] border border-[#2a3040] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4">
+      <div className="bg-[#1a1f2e] border border-[#2a3040] rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col m-4">
         {/* Header */}
-        <div className="sticky top-0 bg-[#1a1f2e] border-b border-[#2a3040] px-6 py-4 flex items-center justify-between z-10">
+        <div className="flex-shrink-0 bg-[#1a1f2e] border-b border-[#2a3040] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-white">
               {selectedRule ? 'Edit Firewall Rule' : 'Create Firewall Rule'}
@@ -127,7 +127,7 @@ export const RuleEditor: React.FC = () => {
         </div>
 
         {/* Form Body */}
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -411,7 +411,7 @@ export const RuleEditor: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-[#1a1f2e] border-t border-[#2a3040] px-6 py-4 flex items-center justify-end gap-3">
+        <div className="flex-shrink-0 bg-[#1a1f2e] border-t border-[#2a3040] px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
           <button
             onClick={handleClose}
             className="px-4 py-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
