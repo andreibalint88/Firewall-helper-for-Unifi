@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
+const { initDatabase, ensureDefaultAdmin } = require('./database');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 
@@ -48,9 +49,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initDatabase();
+    ensureDefaultAdmin();
+    console.log('Database initialized successfully');
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║   UniFi Firewall Manager - Authentication Server        ║
 ╠══════════════════════════════════════════════════════════╣
@@ -58,5 +66,12 @@ app.listen(PORT, () => {
 ║  Environment: ${process.env.NODE_ENV || 'development'}                             ║
 ║  API: http://localhost:${PORT}/api                          ║
 ╚══════════════════════════════════════════════════════════╝
-  `);
-});
+      `);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
