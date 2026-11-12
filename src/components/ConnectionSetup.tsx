@@ -45,8 +45,8 @@ export const ConnectionSetup: React.FC = () => {
               useDemo ? 'bg-blue-600' : 'bg-gray-600'
             }`}
           >
-            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-              useDemo ? 'translate-x-6.5' : 'translate-x-0.5'
+            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all duration-200 ${
+              useDemo ? 'left-6' : 'left-0.5'
             }`} />
           </button>
         </div>

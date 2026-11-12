@@ -40,10 +40,7 @@ input, select, textarea, button {
   transition-property: color, background-color, border-color, box-shadow, opacity;
 }
 
-/* Toggle switch fix */
-.translate-x-6\.5 {
-  transform: translateX(1.625rem);
-}
+/* Toggle switch uses left positioning for reliable alignment */
 
 /* Drag ghost styling */
 [draggable="true"] {
