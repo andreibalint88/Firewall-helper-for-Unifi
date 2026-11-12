@@ -1,19 +1,33 @@
 import React from 'react';
 import { useAppStore } from '../store';
+import { useAuthStore } from '../store/authStore';
+import { ViewMode } from '../types';
 import { 
   Shield, LayoutDashboard, List, BookOpen, Settings, 
-  Wifi, AlertTriangle, CheckCircle2, XCircle
+  Wifi, AlertTriangle, CheckCircle2, XCircle, Users, LogOut, User
 } from 'lucide-react';
+
+interface NavItem {
+  id: ViewMode;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}
 
 export const Sidebar: React.FC = () => {
   const { viewMode, setViewMode, connection, useDemo } = useAppStore();
+  const { user, logout } = useAuthStore();
 
-  const navItems = [
-    { id: 'dashboard' as const, icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'rules' as const, icon: List, label: 'Firewall Rules' },
-    { id: 'guide' as const, icon: BookOpen, label: 'Concept Guide' },
-    { id: 'setup' as const, icon: Settings, label: 'Connection' },
+  const navItems: NavItem[] = [
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'rules', icon: List, label: 'Firewall Rules' },
+    { id: 'guide', icon: BookOpen, label: 'Concept Guide' },
+    { id: 'setup', icon: Settings, label: 'Connection' },
   ];
+
+  // Add Users link for admins
+  if (user?.role === 'admin') {
+    navItems.push({ id: 'users', icon: Users, label: 'User Management' });
+  }
 
   return (
     <div className="w-64 bg-[#1a1f2e] min-h-screen flex flex-col border-r border-[#2a3040]">
@@ -29,6 +43,25 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* User Info */}
+      {user && (
+        <div className="p-4 border-b border-[#2a3040]">
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              user.role === 'admin' ? 'bg-purple-500/20' : 'bg-blue-500/20'
+            }`}>
+              <User className={`w-4 h-4 ${
+                user.role === 'admin' ? 'text-purple-400' : 'text-blue-400'
+              }`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white font-medium truncate">{user.username}</p>
+              <p className="text-xs text-gray-400 capitalize">{user.role}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Connection Status */}
       <div className="p-4 border-b border-[#2a3040]">
@@ -80,11 +113,18 @@ export const Sidebar: React.FC = () => {
         </ul>
       </nav>
 
-      {/* Footer */}
+      {/* Footer with Logout */}
       <div className="p-4 border-t border-[#2a3040]">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+        <div className="flex items-center gap-2 text-xs text-gray-500 mt-2 px-4">
           <Wifi className="w-3 h-3" />
-          <span>UniFi → Meraki Bridge v1.0</span>
+          <span>UniFi → Meraki Bridge v1.1.5</span>
         </div>
       </div>
     </div>

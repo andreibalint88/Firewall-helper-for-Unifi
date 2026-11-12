@@ -5,16 +5,26 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "server": "node server/index.js",
+    "server:dev": "NODE_ENV=development node server/index.js",
+    "start": "NODE_ENV=production node server/index.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server:dev\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.98.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.1.1",
     "canvas-confetti": "^1.9.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "date-fns": "^2.30.0",
+    "express": "^5.3.0",
     "framer-motion": "^11.16.1",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

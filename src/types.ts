@@ -53,4 +53,4 @@ export interface MerakiRuleEquivalent {
   notes: string;
 }
 
-export type ViewMode = 'dashboard' | 'rules' | 'editor' | 'guide' | 'setup';
+export type ViewMode = 'dashboard' | 'rules' | 'editor' | 'guide' | 'setup' | 'users';
