@@ -1,217 +1,169 @@
 import { UniFiConnection, FirewallRule, FirewallGroup, NetworkConfig } from '../types';
 
-// UniFi OS API helper
-// Note: Due to browser CORS restrictions, this tool works best when:
-// 1. The UniFi controller has CORS enabled (UDM Pro with custom config)
-// 2. You're running this tool on the same network/domain
-// 3. Using a CORS proxy for development
+// Backend API URL - the proxy server that talks to UniFi
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
 
 class UniFiApi {
-  private baseUrl: string = '';
-  private csrfToken: string = '';
-  private cookies: string = '';
-  private site: string = 'default';
+  private sessionId: string = '';
+  private connected: boolean = false;
 
-  setConnection(config: UniFiConnection) {
-    this.baseUrl = config.controllerUrl.replace(/\/$/, '');
-    this.site = config.site || 'default';
+  isConnected(): boolean {
+    return this.connected;
   }
 
-  async authenticate(username: string, password: string): Promise<boolean> {
+  async connect(config: UniFiConnection): Promise<boolean> {
     try {
-      // Try UniFi OS style authentication (UDM Pro, Cloud Key Gen2+)
-      const response = await fetch(`${this.baseUrl}/api/auth/login`, {
+      const response = await fetch(`${API_URL}/api/unifi/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-        credentials: 'include',
+        body: JSON.stringify({
+          controllerUrl: config.controllerUrl,
+          username: config.username,
+          password: config.password,
+          site: config.site || 'default',
+        }),
       });
 
-      if (response.ok) {
-        this.csrfToken = response.headers.get('x-csrf-token') || '';
+      if (!response.ok) {
         const data = await response.json();
-        return data.rc === 'ok' || data.meta?.rc === 'ok' || response.ok;
+        throw new Error(data.details || data.error || 'Connection failed');
       }
 
-      // Try legacy authentication (Cloud Key Gen1, older controllers)
-      const legacyResponse = await fetch(`${this.baseUrl}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-        credentials: 'include',
-      });
-
-      if (legacyResponse.ok) {
-        const data = await legacyResponse.json();
-        return data.meta?.rc === 'ok' || legacyResponse.ok;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Authentication error:', error);
-      return false;
+      const data = await response.json();
+      this.sessionId = data.sessionId;
+      this.connected = true;
+      return true;
+    } catch (error: any) {
+      console.error('Connect error:', error);
+      this.connected = false;
+      throw error;
     }
   }
 
-  private getHeaders(): HeadersInit {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    if (this.csrfToken) {
-      headers['X-CSRF-Token'] = this.csrfToken;
+  async disconnect(): Promise<void> {
+    if (this.sessionId) {
+      try {
+        await fetch(`${API_URL}/api/unifi/disconnect`, {
+          method: 'POST',
+          headers: { 'sessionId': this.sessionId },
+        });
+      } catch (error) {
+        console.error('Disconnect error:', error);
+      }
     }
-    return headers;
+    this.sessionId = '';
+    this.connected = false;
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+    if (!this.sessionId) {
+      throw new Error('Not connected to UniFi controller');
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'sessionId': this.sessionId,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.details || data.error || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async getFirewallRules(): Promise<FirewallRule[]> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/firewallrule`,
-        {
-          method: 'GET',
-          headers: this.getHeaders(),
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch firewall rules');
-      const data = await response.json();
-      return (data.data || []).map((rule: any, index: number) => ({
-        id: rule._id || `rule-${index}`,
-        _id: rule._id,
-        name: rule.name || `Rule ${index + 1}`,
-        enabled: rule.enabled !== false,
-        action: rule.action || 'accept',
-        protocol: rule.protocol || 'all',
-        ruleIndex: rule.rule_index || index,
-        logging: rule.log === true,
-        state: rule.state || '',
-        srcFirewallGroupIds: rule.src_firewall_group_ids || [],
-        dstFirewallGroupIds: rule.dst_firewall_group_ids || [],
-        srcAddresses: rule.src_addresses || [],
-        dstAddresses: rule.dst_addresses || [],
-        srcPorts: rule.src_ports || [],
-        dstPorts: rule.dst_ports || [],
-        srcNetworkconfIds: rule.src_networkconf_ids || [],
-        dstNetworkconfIds: rule.dst_networkconf_ids || [],
-        ipType: rule.ip_type || 'ipv4',
-        matchingTarget: rule.matching_target || '',
-      }));
-    } catch (error) {
-      console.error('Error fetching firewall rules:', error);
-      throw error;
-    }
+    const data = await this.request('/api/unifi/firewall-rules');
+    return this.normalizeRules(data.rules || []);
   }
 
   async getFirewallGroups(): Promise<FirewallGroup[]> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/firewallgroup`,
-        {
-          method: 'GET',
-          headers: this.getHeaders(),
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch firewall groups');
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error fetching firewall groups:', error);
-      throw error;
-    }
+    const data = await this.request('/api/unifi/firewall-groups');
+    return data.groups || [];
   }
 
   async getNetworkConfigs(): Promise<NetworkConfig[]> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/networkconf`,
-        {
-          method: 'GET',
-          headers: this.getHeaders(),
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch network configs');
-      const data = await response.json();
-      return (data.data || []).map((net: any) => ({
-        _id: net._id,
-        name: net.name,
-        subnet: net.subnet || '',
-        purpose: net.purpose || '',
-      }));
-    } catch (error) {
-      console.error('Error fetching network configs:', error);
-      throw error;
-    }
+    const data = await this.request('/api/unifi/networks');
+    return data.networks || [];
   }
 
-  async updateFirewallRule(ruleId: string, updates: Partial<FirewallRule>): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/firewallrule/${ruleId}`,
-        {
-          method: 'PUT',
-          headers: this.getHeaders(),
-          credentials: 'include',
-          body: JSON.stringify(updates),
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error('Error updating firewall rule:', error);
-      throw error;
-    }
+  async updateFirewallRule(ruleId: string, updates: Partial<FirewallRule>): Promise<void> {
+    await this.request(`/api/unifi/firewall-rules/${ruleId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
   }
 
-  async createFirewallRule(rule: Partial<FirewallRule>): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/firewallrule`,
-        {
-          method: 'POST',
-          headers: this.getHeaders(),
-          credentials: 'include',
-          body: JSON.stringify(rule),
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error('Error creating firewall rule:', error);
-      throw error;
-    }
+  async createFirewallRule(rule: Partial<FirewallRule>): Promise<void> {
+    await this.request('/api/unifi/firewall-rules', {
+      method: 'POST',
+      body: JSON.stringify(rule),
+    });
   }
 
-  async deleteFirewallRule(ruleId: string): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/proxy/network/api/s/${this.site}/rest/firewallrule/${ruleId}`,
-        {
-          method: 'DELETE',
-          headers: this.getHeaders(),
-          credentials: 'include',
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error('Error deleting firewall rule:', error);
-      throw error;
-    }
+  async deleteFirewallRule(ruleId: string): Promise<void> {
+    await this.request(`/api/unifi/firewall-rules/${ruleId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Normalize UniFi API response to our internal format
+  private normalizeRules(rules: any[]): FirewallRule[] {
+    return rules.map((rule, index) => ({
+      id: rule._id || rule.id || `rule-${index}`,
+      _id: rule._id,
+      name: rule.name || 'Unnamed Rule',
+      enabled: rule.enabled !== false,
+      action: this.normalizeAction(rule.action),
+      protocol: this.normalizeProtocol(rule.protocol),
+      ruleIndex: index,
+      logging: rule.logging || false,
+      state: rule.state || '',
+      srcFirewallGroupIds: rule.src_firewallgroup_ids || rule.srcFirewallGroupIds || [],
+      dstFirewallGroupIds: rule.dst_firewallgroup_ids || rule.dstFirewallGroupIds || [],
+      srcAddresses: rule.src_addresses || rule.srcAddresses || [],
+      dstAddresses: rule.dst_addresses || rule.dstAddresses || [],
+      srcPorts: rule.src_ports || rule.srcPorts || [],
+      dstPorts: rule.dst_ports || rule.dstPorts || [],
+      srcNetworkconfIds: rule.src_networkconf_ids || rule.srcNetworkconfIds || [],
+      dstNetworkconfIds: rule.dst_networkconf_ids || rule.dstNetworkconfIds || [],
+      ipType: rule.ip_type || rule.ipType || 'ipv4',
+      matchingTarget: rule.matching_target || rule.matchingTarget || '',
+    }));
+  }
+
+  private normalizeAction(action: string): 'accept' | 'drop' | 'reject' {
+    const normalized = (action || '').toLowerCase();
+    if (normalized === 'accept' || normalized === 'allow') return 'accept';
+    if (normalized === 'reject') return 'reject';
+    return 'drop';
+  }
+
+  private normalizeProtocol(protocol: string): 'tcp' | 'udp' | 'tcp_udp' | 'all' | 'icmp' {
+    const normalized = (protocol || '').toLowerCase();
+    if (normalized === 'tcp') return 'tcp';
+    if (normalized === 'udp') return 'udp';
+    if (normalized === 'tcp_udp' || normalized === 'tcp-udp') return 'tcp_udp';
+    if (normalized === 'icmp') return 'icmp';
+    return 'all';
   }
 }
 
 export const unifiApi = new UniFiApi();
 
-// Demo data for when not connected to a real controller
+// Demo data for when not connected to a controller
 export const demoFirewallRules: FirewallRule[] = [
   {
     id: 'demo-1',
-    name: 'Allow DNS',
+    name: 'Allow DNS Traffic',
     enabled: true,
     action: 'accept',
-    protocol: 'tcp_udp',
+    protocol: 'udp',
     ruleIndex: 0,
     logging: false,
     state: 'new',
@@ -224,18 +176,19 @@ export const demoFirewallRules: FirewallRule[] = [
     srcNetworkconfIds: [],
     dstNetworkconfIds: [],
     ipType: 'ipv4',
-    matchingTarget: 'dst',
+    matchingTarget: 'internet',
+    merakiEquivalent: 'L3 Rule: Allow DNS',
   },
   {
     id: 'demo-2',
-    name: 'Block IoT to LAN',
+    name: 'Block IoT to Internal',
     enabled: true,
     action: 'drop',
     protocol: 'all',
     ruleIndex: 1,
     logging: true,
     state: 'new',
-    srcFirewallGroupIds: [],
+    srcFirewallGroupIds: ['iot-group-id'],
     dstFirewallGroupIds: [],
     srcAddresses: ['192.168.50.0/24'],
     dstAddresses: ['192.168.1.0/24'],
@@ -244,15 +197,100 @@ export const demoFirewallRules: FirewallRule[] = [
     srcNetworkconfIds: [],
     dstNetworkconfIds: [],
     ipType: 'ipv4',
-    matchingTarget: 'dst',
+    matchingTarget: 'lan',
+    merakiEquivalent: 'L3 Rule: Deny IoT → LAN',
   },
   {
     id: 'demo-3',
-    name: 'Allow Established',
+    name: 'Allow HTTPS Outbound',
+    enabled: true,
+    action: 'accept',
+    protocol: 'tcp',
+    ruleIndex: 2,
+    logging: false,
+    state: 'new',
+    srcFirewallGroupIds: [],
+    dstFirewallGroupIds: [],
+    srcAddresses: ['192.168.1.0/24'],
+    dstAddresses: ['0.0.0.0/0'],
+    srcPorts: [],
+    dstPorts: ['443'],
+    srcNetworkconfIds: [],
+    dstNetworkconfIds: [],
+    ipType: 'ipv4',
+    matchingTarget: 'internet',
+    merakiEquivalent: 'L3 Rule: Allow HTTPS',
+  },
+  {
+    id: 'demo-4',
+    name: 'Block Known Malware IPs',
+    enabled: true,
+    action: 'drop',
+    protocol: 'all',
+    ruleIndex: 3,
+    logging: true,
+    state: 'new',
+    srcFirewallGroupIds: [],
+    dstFirewallGroupIds: ['malware-blocklist'],
+    srcAddresses: [],
+    dstAddresses: [],
+    srcPorts: [],
+    dstPorts: [],
+    srcNetworkconfIds: [],
+    dstNetworkconfIds: [],
+    ipType: 'ipv4_ipv6',
+    matchingTarget: 'internet',
+    merakiEquivalent: 'L3 Rule: Deny Malware List',
+  },
+  {
+    id: 'demo-5',
+    name: 'Allow ICMP (Ping)',
+    enabled: true,
+    action: 'accept',
+    protocol: 'icmp',
+    ruleIndex: 4,
+    logging: false,
+    state: 'new',
+    srcFirewallGroupIds: [],
+    dstFirewallGroupIds: [],
+    srcAddresses: ['192.168.0.0/16'],
+    dstAddresses: ['192.168.0.0/16'],
+    srcPorts: [],
+    dstPorts: [],
+    srcNetworkconfIds: [],
+    dstNetworkconfIds: [],
+    ipType: 'ipv4',
+    matchingTarget: 'lan',
+    merakiEquivalent: 'L3 Rule: Allow ICMP',
+  },
+  {
+    id: 'demo-6',
+    name: 'Block Guest to Servers',
+    enabled: true,
+    action: 'drop',
+    protocol: 'all',
+    ruleIndex: 5,
+    logging: true,
+    state: 'new',
+    srcFirewallGroupIds: [],
+    dstFirewallGroupIds: [],
+    srcAddresses: ['192.168.100.0/24'],
+    dstAddresses: ['10.0.0.0/8'],
+    srcPorts: [],
+    dstPorts: [],
+    srcNetworkconfIds: [],
+    dstNetworkconfIds: [],
+    ipType: 'ipv4',
+    matchingTarget: 'lan',
+    merakiEquivalent: 'L3 Rule: Deny Guest → Servers',
+  },
+  {
+    id: 'demo-7',
+    name: 'Allow Established Connections',
     enabled: true,
     action: 'accept',
     protocol: 'all',
-    ruleIndex: 2,
+    ruleIndex: 6,
     logging: false,
     state: 'established',
     srcFirewallGroupIds: [],
@@ -263,122 +301,77 @@ export const demoFirewallRules: FirewallRule[] = [
     dstPorts: [],
     srcNetworkconfIds: [],
     dstNetworkconfIds: [],
-    ipType: 'ipv4',
+    ipType: 'ipv4_ipv6',
     matchingTarget: '',
-  },
-  {
-    id: 'demo-4',
-    name: 'Allow Guest HTTP/S',
-    enabled: true,
-    action: 'accept',
-    protocol: 'tcp',
-    ruleIndex: 3,
-    logging: false,
-    state: 'new',
-    srcFirewallGroupIds: [],
-    dstFirewallGroupIds: [],
-    srcAddresses: ['192.168.10.0/24'],
-    dstAddresses: ['0.0.0.0/0'],
-    srcPorts: [],
-    dstPorts: ['80', '443'],
-    srcNetworkconfIds: [],
-    dstNetworkconfIds: [],
-    ipType: 'ipv4',
-    matchingTarget: 'dst',
-  },
-  {
-    id: 'demo-5',
-    name: 'Block Guest to Private',
-    enabled: true,
-    action: 'drop',
-    protocol: 'all',
-    ruleIndex: 4,
-    logging: true,
-    state: 'new',
-    srcFirewallGroupIds: [],
-    dstFirewallGroupIds: [],
-    srcAddresses: ['192.168.10.0/24'],
-    dstAddresses: ['192.168.1.0/24', '192.168.20.0/24'],
-    srcPorts: [],
-    dstPorts: [],
-    srcNetworkconfIds: [],
-    dstNetworkconfIds: [],
-    ipType: 'ipv4',
-    matchingTarget: 'dst',
-  },
-  {
-    id: 'demo-6',
-    name: 'Allow VPN Internal',
-    enabled: true,
-    action: 'accept',
-    protocol: 'all',
-    ruleIndex: 5,
-    logging: false,
-    state: 'new',
-    srcFirewallGroupIds: [],
-    dstFirewallGroupIds: [],
-    srcAddresses: ['10.0.0.0/24'],
-    dstAddresses: ['192.168.1.0/24', '192.168.20.0/24'],
-    srcPorts: [],
-    dstPorts: [],
-    srcNetworkconfIds: [],
-    dstNetworkconfIds: [],
-    ipType: 'ipv4',
-    matchingTarget: 'dst',
-  },
-  {
-    id: 'demo-7',
-    name: 'Block China GeoIP',
-    enabled: false,
-    action: 'drop',
-    protocol: 'all',
-    ruleIndex: 6,
-    logging: true,
-    state: 'new',
-    srcFirewallGroupIds: ['geoip-cn'],
-    dstFirewallGroupIds: [],
-    srcAddresses: [],
-    dstAddresses: [],
-    srcPorts: [],
-    dstPorts: [],
-    srcNetworkconfIds: [],
-    dstNetworkconfIds: [],
-    ipType: 'ipv4',
-    matchingTarget: 'src',
+    merakiEquivalent: 'Stateful Inspection (automatic in Meraki)',
   },
   {
     id: 'demo-8',
-    name: 'Allow Server SSH',
-    enabled: true,
+    name: 'Legacy FTP Rule (Disabled)',
+    enabled: false,
     action: 'accept',
     protocol: 'tcp',
     ruleIndex: 7,
-    logging: true,
+    logging: false,
     state: 'new',
     srcFirewallGroupIds: [],
     dstFirewallGroupIds: [],
     srcAddresses: ['192.168.1.0/24'],
-    dstAddresses: ['192.168.20.10'],
+    dstAddresses: ['0.0.0.0/0'],
     srcPorts: [],
-    dstPorts: ['22'],
+    dstPorts: ['20', '21'],
     srcNetworkconfIds: [],
     dstNetworkconfIds: [],
     ipType: 'ipv4',
-    matchingTarget: 'dst',
+    matchingTarget: 'internet',
+    merakiEquivalent: 'L3 Rule: Allow FTP (legacy)',
   },
 ];
 
 export const demoFirewallGroups: FirewallGroup[] = [
-  { _id: 'geoip-cn', name: 'China GeoIP', group_type: 'address-group', group_members: ['CN'] },
-  { _id: 'servers', name: 'Servers', group_type: 'address-group', group_members: ['192.168.20.10', '192.168.20.11'] },
-  { _id: 'web-ports', name: 'Web Ports', group_type: 'port-group', group_members: ['80', '443', '8080'] },
-  { _id: 'iot-network', name: 'IoT Network', group_type: 'network-group', group_members: ['192.168.50.0/24'] },
+  {
+    _id: 'iot-group-id',
+    name: 'IoT Devices',
+    group_type: 'address-group',
+    group_members: ['192.168.50.10', '192.168.50.11', '192.168.50.12'],
+  },
+  {
+    _id: 'malware-blocklist',
+    name: 'Malware Blocklist',
+    group_type: 'address-group',
+    group_members: ['198.51.100.0/24', '203.0.113.0/24'],
+  },
+  {
+    _id: 'server-ports',
+    name: 'Server Ports',
+    group_type: 'port-group',
+    group_members: ['80', '443', '8080', '8443'],
+  },
 ];
 
 export const demoNetworks: NetworkConfig[] = [
-  { _id: 'net-1', name: 'Default', subnet: '192.168.1.0/24', purpose: 'corporate' },
-  { _id: 'net-2', name: 'Servers', subnet: '192.168.20.0/24', purpose: 'corporate' },
-  { _id: 'net-3', name: 'Guest', subnet: '192.168.10.0/24', purpose: 'guest' },
-  { _id: 'net-4', name: 'IoT', subnet: '192.168.50.0/24', purpose: 'corporate' },
-  { _id: 'net-5', name: 'VPN', subnet: '10.0.0.0/24', purpose: 'vpn' },
+  {
+    _id: 'net-1',
+    name: 'LAN',
+    subnet: '192.168.1.0/24',
+    purpose: 'corporate',
+  },
+  {
+    _id: 'net-2',
+    name: 'Guest',
+    subnet: '192.168.100.0/24',
+    purpose: 'guest',
+  },
+  {
+    _id: 'net-3',
+    name: 'IoT',
+    subnet: '192.168.50.0/24',
+    purpose: 'corporate',
+  },
+  {
+    _id: 'net-4',
+    name: 'Servers',
+    subnet: '10.0.0.0/24',
+    purpose: 'corporate',
+  },
 ];

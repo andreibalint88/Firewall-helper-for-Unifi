@@ -7,7 +7,7 @@ interface AppState {
   connection: UniFiConnection;
   setConnection: (conn: Partial<UniFiConnection>) => void;
   connect: () => Promise<boolean>;
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
   useDemo: boolean;
   setUseDemo: (val: boolean) => void;
 
@@ -52,18 +52,27 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   connect: async () => {
     const { connection } = get();
-    unifiApi.setConnection(connection);
-    const success = await unifiApi.authenticate(connection.username, connection.password);
-    if (success) {
-      set((state) => ({
-        connection: { ...state.connection, isConnected: true }
-      }));
-      await get().fetchData();
+    try {
+      const success = await unifiApi.connect(connection);
+      if (success) {
+        set((state) => ({
+          connection: { ...state.connection, isConnected: true }
+        }));
+        await get().fetchData();
+      }
+      return success;
+    } catch (error) {
+      console.error('Connection failed:', error);
+      return false;
     }
-    return success;
   },
 
-  disconnect: () => {
+  disconnect: async () => {
+    try {
+      await unifiApi.disconnect();
+    } catch (error) {
+      console.error('Disconnect error:', error);
+    }
     set((state) => ({
       connection: { ...state.connection, isConnected: false },
       firewallRules: [],

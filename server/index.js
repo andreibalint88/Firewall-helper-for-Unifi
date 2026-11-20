@@ -6,6 +6,7 @@ const path = require('path');
 const { initDatabase, ensureDefaultAdmin } = require('./database');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const unifiRoutes = require('./routes/unifi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/unifi', unifiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

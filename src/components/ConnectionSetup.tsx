@@ -177,46 +177,45 @@ export const ConnectionSetup: React.FC = () => {
         )}
       </div>
 
-      {/* CORS Info */}
+      {/* Architecture Info */}
       <div className="bg-[#1e2436] rounded-xl border border-[#2a3040] p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
             <Info className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-white font-medium">Important: CORS Configuration</h3>
-            <p className="text-gray-400 text-sm">Browser security restrictions may prevent direct connections</p>
+            <h3 className="text-white font-medium">How It Works</h3>
+            <p className="text-gray-400 text-sm">This tool uses a backend proxy to bypass CORS restrictions</p>
           </div>
         </div>
 
         <div className="bg-[#141824] rounded-lg p-4 border border-[#2a3040]">
           <p className="text-gray-300 text-sm mb-3">
-            UniFi controllers don't allow cross-origin requests by default. To connect directly from this tool, you need one of:
+            The backend server acts as a proxy between this tool and your UniFi controller. This avoids browser CORS restrictions. To connect, you need:
           </p>
           <ul className="space-y-2 text-sm text-gray-400">
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">1.</span>
-              <span>Enable CORS on your UDM Pro by SSHing in and adding headers to the nginx config</span>
+              <span className="text-green-400 font-bold">✓</span>
+              <span>The backend server running (<code className="text-blue-400">node server/index.js</code>)</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">2.</span>
-              <span>Use a reverse proxy (nginx/Caddy) with CORS headers enabled</span>
+              <span className="text-green-400 font-bold">✓</span>
+              <span>The backend must be able to reach your UniFi controller on your network</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">3.</span>
-              <span>Run this tool locally on the same network with a browser extension to disable CORS</span>
+              <span className="text-green-400 font-bold">✓</span>
+              <span>Valid UniFi controller credentials with admin access</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">4.</span>
-              <span>Use Demo Mode to explore the interface and understand the Meraki ↔ UniFi mapping</span>
+              <span className="text-green-400 font-bold">✓</span>
+              <span>Set <code className="text-blue-400">VITE_API_URL</code> to your backend server URL</span>
             </li>
           </ul>
         </div>
 
         <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
           <p className="text-blue-300 text-sm">
-            💡 <strong>Tip:</strong> Even in Demo Mode, you can learn how each UniFi firewall concept maps to Meraki. 
-            Use the Concept Guide to understand the differences.
+            💡 <strong>Tip:</strong> Use Demo Mode to explore the interface and understand the Meraki ↔ UniFi mapping without needing a live controller.
           </p>
         </div>
       </div>
